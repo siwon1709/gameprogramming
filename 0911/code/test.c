@@ -1,0 +1,51 @@
+#include <stdio.h>
+
+void draw_square(int size);
+
+int main(void)
+{
+    int n;
+    printf("정사각형 그리기\n\n");
+    printf("정사각형의 길이(최대 37)를\n");
+    printf("입력하고 Enter>");
+    scanf("%d", &n);
+    draw_square(n);
+    return 0;
+}
+
+void draw_square(int size)
+{
+    int i, j;
+    unsigned char a = 0xa6;
+    unsigned char b[7];
+    
+    for(i = 1; i < 7; i++)
+        b[i] = 0xa0 + i;
+
+    // 윗변: 가로 길이를 size의 2배로 설정
+    printf("%c%c", a, b[3]);
+    for(i = 0; i < size * 2; i++)
+        printf("%c%c", a, b[1]);
+    printf("%c%c", a, b[4]);
+    printf("\n");
+
+    // 중간 여백 부분
+    for(i = 0; i < size; i++)
+    {
+        printf("%c%c", a, b[2]);
+        
+        // 공백: 가로 길이를 size의 2배로 설정 (스페이스바는 1칸짜리 사용)
+        for(j = 0; j < size * 2; j++)
+            printf(" "); 
+            
+        printf("%c%c", a, b[2]);
+        printf("\n");
+    }
+
+    // 아랫변: 가로 길이를 size의 2배로 설정
+    printf("%c%c", a, b[6]);
+    for(i = 0; i < size * 2; i++)
+        printf("%c%c", a, b[1]);
+    printf("%c%c", a, b[5]);
+    printf("\n");
+}
