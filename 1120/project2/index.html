@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEON TETRIS ULTIMATE - 30 Upgrades</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- 좌측 패널: HOLD, 스킬, 테마, 조작키 -->
+    <div class="side-panel">
+      <div class="card">
+        <div class="card-title">
+          <span>HOLD [C / Shift]</span>
+          <span id="hold-status" style="color: var(--accent);">READY</span>
+        </div>
+        <canvas id="holdCanvas" class="mini-canvas" width="120" height="80"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>SKILL GAUGE</span>
+          <span id="gauge-text">0%</span>
+        </div>
+        <div class="gauge-wrap">
+          <div id="gauge-fill" class="gauge-fill"></div>
+        </div>
+        <div class="skill-btns">
+          <button id="btn-skill-blast" class="btn" disabled>[X] 하단 2줄 폭파 (50%)</button>
+          <button id="btn-skill-slow" class="btn" disabled>[Z] 5초 슬로우 (50%)</button>
+        </div>
+        <div id="slow-indicator" class="stat-sub" style="display:none; margin-top:6px;">⏱ 슬로우 모션 발동 중!</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">THEME & AUDIO</div>
+        <select id="theme-select" style="margin-bottom: 8px;">
+          <option value="neon">테마: 네온 다크 (기본)</option>
+          <option value="cyber">테마: 사이버 핑크</option>
+          <option value="matrix">테마: 에메랄드 매트릭스</option>
+          <option value="retro">테마: 클래식 레트로</option>
+        </select>
+        <div class="top-bar-actions">
+          <button id="btn-mute" class="btn" style="flex:1;">🔊 사운드 ON [M]</button>
+          <button id="btn-pause" class="btn" style="flex:1;">⏸ 일시정지 [P]</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">CONTROLS & SPECIAL</div>
+        <ul class="controls-list">
+          <li><span>←→</span>이동 <span>↑</span>회전 <span>↓</span>하강</li>
+          <li><span>Space</span>하드드롭 <span>C</span>홀드</li>
+          <li><span>R</span>즉시 재시작 <span>M</span>음소거</li>
+        </ul>
+        <div class="badge-row">
+          <span class="badge">💣 폭탄(3x3)</span>
+          <span class="badge">🪨 돌(2타)</span>
+          <span class="badge">🌈 와일드</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중앙 보드 -->
+    <div id="board-container" class="board-container">
+      <canvas id="game" width="300" height="600"></canvas>
+
+      <!-- 타이틀 & 모드 선택 오버레이 -->
+      <div id="start-overlay" class="overlay">
+        <h1>NEON TETRIS</h1>
+        <p>30-UPGRADE EDITION</p>
+
+        <div class="mode-grid" id="mode-grid">
+          <button class="mode-btn selected" data-mode="marathon">
+            마라톤 모드
+            <small>무한 레벨업 하이스코어</small>
+          </button>
+          <button class="mode-btn" data-mode="sprint">
+            40라인 스프린트
+            <small>40줄 최단 시간 클리어</small>
+          </button>
+          <button class="mode-btn" data-mode="ultra">
+            2분 울트라
+            <small>120초 제한 스코어 어택</small>
+          </button>
+          <button class="mode-btn" data-mode="garbage">
+            가비지 챌린지
+            <small>방해 블록 상승 서바이벌</small>
+          </button>
+        </div>
+
+        <div style="width: 100%; margin-bottom: 14px; text-align: left;">
+          <label style="font-size: 11px; color: var(--text-dim); display:block; margin-bottom:4px;">시작 난이도 (초기 레벨)</label>
+          <select id="start-level">
+            <option value="1">Lv.1 입문 (여유로운 속도)</option>
+            <option value="4">Lv.4 숙련 (적당한 속도)</option>
+            <option value="7">Lv.7 전문가 (빠른 낙하)</option>
+            <option value="10">Lv.10 마스터 (초고속)</option>
+          </select>
+        </div>
+
+        <button id="btn-start" class="btn btn-primary" style="width: 100%;">게임 시작 (ENTER)</button>
+      </div>
+
+      <!-- 일시정지 오버레이 -->
+      <div id="pause-overlay" class="overlay hidden">
+        <h1>PAUSED</h1>
+        <p>게임이 일시정지되었습니다.</p>
+        <button id="btn-resume" class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">계속하기 [P]</button>
+        <button id="btn-to-menu" class="btn" style="width: 100%;">모드 선택 화면으로</button>
+      </div>
+
+      <!-- 게임 종료 리포트 오버레이 -->
+      <div id="gameover-overlay" class="overlay hidden">
+        <h1 id="result-title">GAME OVER</h1>
+        <p id="result-subtitle">플레이 결과 리포트</p>
+        <table class="report-table">
+          <tr><td>최종 점수</td><td id="rep-score">0</td></tr>
+          <tr><td>최고 기록 (BEST)</td><td id="rep-best">0</td></tr>
+          <tr><td>달성 레벨 / 삭제 줄</td><td id="rep-lines">Lv.1 / 0줄</td></tr>
+          <tr><td>플레이 시간</td><td id="rep-time">00:00.0</td></tr>
+          <tr><td>최대 콤보 / 테트리스</td><td id="rep-combo">0x / 0회</td></tr>
+        </table>
+        <button id="btn-restart" class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">다시 플레이 [R]</button>
+        <button id="btn-report-menu" class="btn" style="width: 100%;">모드 변경</button>
+      </div>
+    </div>
+
+    <!-- 우측 패널: NEXT 3, 점수, 레벨, 통계 -->
+    <div class="side-panel">
+      <div class="card">
+        <div class="card-title">NEXT QUEUE</div>
+        <canvas id="nextCanvas" class="mini-canvas" width="120" height="230"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-title">SCORE</div>
+        <div id="score" class="stat-value">0</div>
+        <div id="best-score" class="stat-sub">BEST: 0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>LEVEL & LINES</span>
+          <span id="mode-badge" style="color: var(--accent);">MARATHON</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div id="level" class="stat-value">Lv.1</div>
+          <div id="lines" style="font-size:15px; font-weight:700; color:var(--text-dim);">0 LINES</div>
+        </div>
+        <div id="timer-display" class="stat-sub" style="margin-top:6px;">TIME: 00:00.0</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">STATUS & RECORDS</div>
+        <div class="badge-row">
+          <span id="badge-combo" class="badge">COMBO 0</span>
+          <span id="badge-b2b" class="badge">BACK-TO-BACK</span>
+        </div>
+        <div id="lifetime-stats" style="font-size:11px; color:var(--text-dim); margin-top:8px;">
+          누적 플레이: 0회 | 누적 줄: 0줄
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
